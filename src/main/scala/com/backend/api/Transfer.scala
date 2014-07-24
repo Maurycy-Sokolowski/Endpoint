@@ -68,13 +68,14 @@ class Auth extends HttpServlet {
     val callback = request.getParameter("callback")
     try {
       if (request.getParameter("payload") != null) {
-        val payload = parser.parse(request.getParameter("payload")).getAsJsonObject
+        val s = request.getParameter("payload")
+        val payload = parser.parse(s).getAsJsonObject
         val username = payload.get("username").getAsString
         if (miniDB.contains(username)) {
           val password = payload.get("password").getAsString
           val l = miniDB(username)
           if (l._1.equals(password)) {
-            res.addProperty("result", "invalid")
+            res.addProperty("result", "valid")
           }
         }
       }
