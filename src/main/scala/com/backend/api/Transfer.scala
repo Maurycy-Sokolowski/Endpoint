@@ -103,6 +103,11 @@ class Filter extends HttpServlet {
         val filter = payload.get("filter").getAsString
         def compfn(e1: (String, String, String), e2: (String, String, String)) = e1._3.compareTo(e2._3) > 0
         val filtered = miniDB.values.filter(_._2.equals(filter)).toList.sortWith(compfn)
+        for (o <- filtered) {
+          val obj = new JsonObject
+          obj.addProperty("name", o._3)
+          res.add(obj)
+        }
       }
     } catch {
       case e: Exception =>
