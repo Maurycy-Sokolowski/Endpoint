@@ -159,7 +159,7 @@ class ListFiles extends HttpServlet {
         val payload = parser.parse(request.getParameter("payload")).getAsJsonObject
         val filter = payload.get("regex").getAsString
         val reg = new Regex(filter)
-        val f = new File("C:\temp")
+        val f = new File("C:\\temp")
         val l = recursiveListFiles(f, reg)
         for (s <- l) {
           val obj = new JsonObject
