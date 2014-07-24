@@ -122,7 +122,7 @@ class Status extends HttpServlet {
     val res = new JsonObject
     val callback = request.getParameter("callback")
     try {
-      res.addProperty("result", "invalid")
+      res.addProperty("result", "ok")
     } catch {
       case e: Exception =>
     }
