@@ -114,3 +114,63 @@ class Filter extends HttpServlet {
   protected override def doPost(request: HttpServletRequest, response: HttpServletResponse) {
   }
 }
+
+@WebServlet(description = "Endpoint API", urlPatterns = Array("/Status"))
+class Status extends HttpServlet {
+
+  protected override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
+    val res = new JsonObject
+    val callback = request.getParameter("callback")
+    try {
+      if (request.getParameter("payload") != null) {
+        res.addProperty("result", "invalid")
+      }
+    } catch {
+      case e: Exception =>
+    }
+    response.setContentType("application/json")
+    val out = response.getWriter
+    out.print(callback + "(" + res + ");")
+  }
+
+  protected override def doPost(request: HttpServletRequest, response: HttpServletResponse) {
+  }
+}
+
+@WebServlet(description = "Endpoint API", urlPatterns = Array("/ListFiles"))
+class ListFiles extends HttpServlet {
+
+  import scala.util.matching.Regex
+  def recursiveListFiles(f: File, r: Regex): Array[File] = {
+    val these = f.listFiles
+    val good = these.filter(f => r.findFirstIn(f.getName).isDefined)
+    good ++ these.filter(_.isDirectory).flatMap(recursiveListFiles(_, r))
+  }
+
+  protected override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
+    val res = new JsonArray
+    val callback = request.getParameter("callback")
+    try {
+      if (request.getParameter("payload") != null) {
+        val payload = parser.parse(request.getParameter("payload")).getAsJsonObject
+        val filter = payload.get("regex").getAsString
+        val reg = new Regex(filter)
+        val f = new File("C:\temp")
+        val l = recursiveListFiles(f, reg)
+        for (s <- l) {
+          val obj = new JsonObject
+          obj.addProperty("name", s.getName())
+          res.add(obj)
+        }
+      }
+    } catch {
+      case e: Exception =>
+    }
+    response.setContentType("application/json")
+    val out = response.getWriter
+    out.print(callback + "(" + res + ");")
+  }
+
+  protected override def doPost(request: HttpServletRequest, response: HttpServletResponse) {
+  }
+}
