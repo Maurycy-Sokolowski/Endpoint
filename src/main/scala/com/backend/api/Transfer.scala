@@ -35,33 +35,15 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
-import com.googlecode.gwt.crypto.client.TripleDesCipher
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import java.util.UUID
 import Transfer._
-import com.netflix.astyanax.Keyspace
-import com.netflix.astyanax.AstyanaxContext
-import com.netflix.astyanax.impl.AstyanaxConfigurationImpl
-import com.netflix.astyanax.connectionpool.NodeDiscoveryType
-import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl
-import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor
-import com.netflix.astyanax.thrift.ThriftFamilyFactory
-import com.netflix.astyanax.model.ColumnFamily
-import com.netflix.astyanax.serializers.StringSerializer
-import com.netflix.astyanax.connectionpool.exceptions.BadRequestException
-import com.google.common.collect.ImmutableMap
 import scala.collection.mutable.HashMap
-import org.apache.commons.mail._
 import scala.collection.JavaConverters._
 import java.net.InetAddress
-import com.netflix.astyanax.model.ConsistencyLevel
-import net.sf.jmimemagic.Magic
-import com.sksamuel.scrimage.Image
-import com.sksamuel.scrimage.Format
 import java.awt.image.DataBufferByte
 import javax.servlet.annotation.WebFilter
-import javax.servlet.Filter
 import javax.servlet.FilterChain
 import javax.servlet.ServletRequest
 import javax.servlet.ServletResponse
@@ -69,7 +51,8 @@ import javax.servlet.FilterConfig
 
 object Transfer {
   val parser = new JsonParser
-  val miniDB = Map(("alpha" -> ("beta", "female")), ("alpha1" -> ("beta1", "male")))
+  // map to tuples (password, name, gender), a DB would be used in the same form by any given abstraction
+  val miniDB = Map(("alpha" -> ("beta", "female", "cassie")), ("aaa" -> ("cccc", "female", "lola")), ("ffff" -> ("jjjj", "male", "roger")), ("alpha1" -> ("beta1", "male", "john")))
 
   def auth(user: String, pass: String): Boolean = {
     user.equals("alpha")
@@ -77,7 +60,7 @@ object Transfer {
 }
 
 @WebServlet(description = "Endpoint API", urlPatterns = Array("/Auth"))
-class Endpoint extends HttpServlet {
+class Auth extends HttpServlet {
 
   protected override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
     val res = new JsonObject
@@ -94,6 +77,31 @@ class Endpoint extends HttpServlet {
             res.addProperty("result", "invalid")
           }
         }
+      }
+    } catch {
+      case e: Exception =>
+    }
+    response.setContentType("application/json")
+    val out = response.getWriter
+    out.print(callback + "(" + res + ");")
+  }
+
+  protected override def doPost(request: HttpServletRequest, response: HttpServletResponse) {
+  }
+}
+
+@WebServlet(description = "Endpoint API", urlPatterns = Array("/Filter"))
+class Filter extends HttpServlet {
+
+  protected override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
+    val res = new JsonArray
+    val callback = request.getParameter("callback")
+    try {
+      if (request.getParameter("payload") != null) {
+        val payload = parser.parse(request.getParameter("payload")).getAsJsonObject
+        val filter = payload.get("filter").getAsString
+        def compfn(e1: (String, String, String), e2: (String, String, String)) = e1._3.compareTo(e2._3) > 0
+        val filtered = miniDB.values.filter(_._2.equals(filter)).toList.sortWith(compfn)
       }
     } catch {
       case e: Exception =>
