@@ -49,6 +49,10 @@ import javax.servlet.ServletRequest
 import javax.servlet.ServletResponse
 import javax.servlet.FilterConfig
 
+/*
+ * Scala Servlet 3.0 example with Json payload using Gson
+ * @author Maurycy Sokolowski
+ */
 object Transfer {
   val parser = new JsonParser
   // map to tuples (password, name, gender), a DB would be used in the same form by any given abstraction
